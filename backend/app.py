@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,6 +12,9 @@ import random
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
 import logging
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import datetime
+
 
 
 
@@ -35,15 +38,13 @@ app.config['SQLALCHEMY_ECHO'] = False
 
 app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS','False').lower() == 'true'
 
-
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SESSION_TYPE'] = 'filesystem'
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
 CORS(app,supports_credentials=True, origins=["http://127.0.0.1:5500", "http://localhost:3000"]) 
 
 db = SQLAlchemy(app)
 migrate = Migrate(app,db)
 mail = Mail(app)
-
+jwt = JWTManager(app)
 
 
 
@@ -54,7 +55,6 @@ logging.basicConfig(level=logging.DEBUG)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-app.config["SESSION_COOKIE_SECURE"] = True
 
 
 
@@ -145,9 +145,10 @@ def signup():
 
     db.session.add(new_candidate)
     db.session.commit()
-    session['candidate_id'] = new_candidate.id
 
-    return jsonify({'message': 'Signup successful!', 'candidate_id': new_candidate.id}), 201
+    access_token = create_access_token(identity=new_candidate.id)
+
+    return jsonify({'message': 'Signup successful!','token': access_token, 'candidate_id': new_candidate.id}), 201
 
 
 @app.route("/debug-session")
@@ -198,7 +199,7 @@ def profile():
 
 @app.route('/login',methods=['POST'])
 def login():
-    print("🚀 LOGIN ROUTE HIT!")
+    print(" LOGIN ROUTE HIT!")
 
     data = request.get_json()
     print("Received login data:", data)
@@ -224,15 +225,21 @@ def login():
     candidate_id = user.id
     print("Candidate ID being sent:", candidate_id)
 
+    token = create_access_token(identity=user.id, expires_delta=datetime.timedelta(hours=24))
+    print("Candidate ID:", user.id)
 
     
-    session['candidate_id'] = user.id
-    session.modified = True
 
     
-
-    
-    return jsonify({'message': 'Login successful!','candidate_id': user.id}), 200
+    return jsonify({
+        'message': 'Login successful!',
+        'token': token,
+        'user':{
+            'id':user.id,
+            'full_name':user.full_name,
+            'email':user.email
+        }
+        }), 200
 
 
 
@@ -891,7 +898,7 @@ def get_all_candidates_with_categories():
                 Candidate.id, 
                 Candidate.full_name, 
                 Candidate.email, 
-                Verification.category  # Category can be None
+                Verification.category 
             )
             .outerjoin(Verification, Candidate.id == Verification.candidate_id)  # Use outer join to include all candidates
             .all()
