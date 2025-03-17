@@ -9,19 +9,11 @@ const LoginForm = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("/check-session", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then(response => response.json())
-      .then(data => {
-        console.log("Session Data:", data);
-        if (data.user_id) {
-          console.log("User is already logged in with ID:", data.user_id);
-          navigate("/scrollable-cards"); 
-        }
-      })
-      .catch(error => console.error("Error checking session:", error));
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      console.log("User is already logged in");
+      navigate("/scrollable-cards");
+    }
   }, []);
 
 
@@ -115,16 +107,18 @@ const LoginForm = () => {
         console.log("Full Response Data:", result);
         console.log("Candidate ID received from backend:", result.candidate_id);
 
-        if (result.candidate_id) {
-          sessionStorage.setItem("candidate_id", result.candidate_id);
-          console.log("Stored Candidate ID:", result.candidate_id);
+        if (result.token) {
+          localStorage.setItem("authToken", result.token);
+          localStorage.setItem("candidateEmail", email);
+          localStorage.setItem("candidateEmail", email);
+          console.log("JWT Token Stored:", result.token);
+          navigate("/scrollable-cards");
         } else {
-          console.error("Candidate ID is missing in response.");
+          console.error("Login failed: No token received.");
+          alert("Invalid credentials, please try again!");
         }
 
-        localStorage.setItem("candidateEmail", email);
 
-        navigate("/scrollable-cards");
 
 
     } catch (error) {

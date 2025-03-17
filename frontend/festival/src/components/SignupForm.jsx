@@ -81,6 +81,8 @@ const [errorMessage, setErrorMessage] = useState("");
         });
         alert(response.data.message);
 
+        localStorage.setItem("token", response.data.token);
+
 
 
      navigate("/login");
