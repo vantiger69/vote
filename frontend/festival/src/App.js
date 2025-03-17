@@ -20,7 +20,7 @@ function App() {
        <Route path="/login" element={<LoginForm />} /> 
        <Route path="/scrollable-cards" element={<ScrollableCards/>}/> 
        <Route path="/profile-page/:candidateId" element={<ProfilePage />}/> 
-       <Route path="/verification-form/:candidateId" element={<VerificationForm/>}/>
+       <Route path="/verification-form/" element={<VerificationForm/>}/>
       </Routes>
     </Router>
   );

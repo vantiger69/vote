@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-
+import { useNavigate } from "react-router-dom";
 
 const VerificationPage = () => {
   const [idNumber, setIdNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [enteredOTP, setEnteredOTP] = useState("");
+  const navigate = useNavigate();
 
 
 const sendOTP = async () => {

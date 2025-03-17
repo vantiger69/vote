@@ -53,7 +53,7 @@ const ScrollableCards = () => {
       return;
     }
 
-    console.log("✅ Candidate ID Retrieved:", candidateId);
+    console.log("Candidate ID Retrieved:", candidateId);
     console.log("Sending to backend:", { category, candidate_id: candidateId });
 
     try {

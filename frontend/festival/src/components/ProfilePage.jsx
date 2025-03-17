@@ -25,6 +25,7 @@ const ProfilePage = () => {
     .then((data) => {
       console.log("Candidate Data:", data);
       if (!data.error){
+        setCandidate(data);
         setName(data.full_name);
         setProfileImage(data.profileImage);
       }
@@ -33,18 +34,41 @@ const ProfilePage = () => {
   
 
 
-  fetch(`http://localhost:5000/fetch_category/${candidateId}`, { credentials: "include" })
-  .then(response => response.json())
+  fetch(`/fetch_category/${candidateId}`, { credentials: "include" })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return response.json();
+  })
   .then(data => {
     console.log("Category Data:", data);
-    if (data.candidate && data.categories) {
-      setCandidate(data.candidate);
+  
+      if (data.categories) {
+    
       setCategories(data.categories);
     }
   })
   
   .catch((error) => console.error("Error fetching category:", error));
 
+}, [candidateId]);
+
+useEffect(() => {
+  const fetchVotes = () => {
+    fetch(`http://localhost:5000/get_votes/${candidateId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Vote Count Data:", data);
+        setVotes(data.vote_count || 0);
+      })
+      .catch((error) => console.error("Error fetching votes:", error));
+  };
+
+  fetchVotes(); 
+  const interval = setInterval(fetchVotes, 5000); 
+
+  return () => clearInterval(interval);
 }, [candidateId]);
  
 
@@ -73,10 +97,12 @@ const ProfilePage = () => {
   return (
     <div style={styles.container}>
 
-{candidate.name && <h2 style={styles.name}>Name: {candidate.name}</h2>}
+  {name && <h2 style={styles.name}>Name: {name}</h2>} 
 
       
-      {categories.length > 0 && <h3>Category: {categories[0]}</h3>}
+    
+     <h3>Category: {Array.isArray(categories) ? categories.join(", ") : categories}</h3> 
+
 
      <div style={styles.profileIcon} onClick={() => document.getElementById("fileInput").click()}>
       <img 
